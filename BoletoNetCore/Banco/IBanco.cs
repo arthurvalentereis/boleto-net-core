@@ -1,5 +1,6 @@
-using BoletoNetCore.CartãoDeCredito;
+﻿using BoletoNetCore.CartãoDeCredito;
 using BoletoNetCore.LinkPagamento;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -75,6 +76,22 @@ namespace BoletoNetCore
                                             int numeroRegistroCobrancaDescontada, decimal valorCobrancaDescontada);
 
         string FormatarNomeArquivoRemessa(int numeroSequencial);
+
+        #region #173339 - Remover no Pull Request (se aprovado)
+
+        /// <summary>
+        /// Retorna um array de carteiras implementadas para este banco.
+        /// </summary>
+        /// <param name="predicate">
+        /// Função opcional para filtrar as carteiras retornadas.
+        /// Se não for informada, retorna todas as carteiras implementadas.
+        /// </param>
+        /// <returns>
+        /// Array de strings contendo os códigos das carteiras implementadas.
+        /// </returns>
+        IEnumerable<(string Carteira, string VariacaoCarteira)> ObterCarteiras(Func<(string Carteira, string VariacaoCarteira), bool> predicate = null);
+
+        #endregion
     }
 
     /// <summary>
@@ -95,6 +112,8 @@ namespace BoletoNetCore
         void LerHeaderRetornoCNAB400(string registro);
         void CompletarHeaderRetornoCNAB400(string registro);
         void LerDetalheRetornoCNAB400Segmento1(ref Boleto boleto, string registro);
+        void LerDetalheRetornoCNAB400Segmento2(ref Boleto boleto, string registro);
+        void LerDetalheRetornoCNAB400Segmento4(ref Boleto boleto, string registro);
         void LerDetalheRetornoCNAB400Segmento7(ref Boleto boleto, string registro);
         void LerTrailerRetornoCNAB400(string registro);
     }

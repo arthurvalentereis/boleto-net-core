@@ -75,6 +75,17 @@ namespace BoletoNetCore
             }
         }
 
+        public void LerDetalheRetornoCNAB400Segmento2(ref Boleto boleto, string registro)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void LerDetalheRetornoCNAB400Segmento4(ref Boleto boleto, string registro)
+        {
+            boleto.QRCode = registro.Substring(28, 77);
+            boleto.TxId = registro.Substring(105, 35);
+        }
+
         public void LerDetalheRetornoCNAB400Segmento7(ref Boleto boleto, string registro)
         {
             throw new NotImplementedException();

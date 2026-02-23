@@ -154,9 +154,9 @@ namespace BoletoNetCore
             reg.Adicionar(TTiposDadoEDI.ediDataDDMMAAAA_________, 0110, 008, 0, boleto.DataEmissao, '0'); // 110 a 117 - Data da emissão do título
 
             // 1 - Valor / 2 - Percentual / 3 - Isento
-            reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0118, 001, 0, boleto.ValorJurosDia != 0 ? "1" : "3", '0'); // 118 a 118 - Código do juro de mora
+            reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0118, 001, 0, (boleto.ValorJurosDia != 0) ? "1" : ((boleto.PercentualJurosDia != 0) ? "2" : "3"), '0'); // 118 a 118 - Código do juro de mora
             reg.Adicionar(TTiposDadoEDI.ediDataDDMMAAAA_________, 0119, 008, 0, boleto.DataJuros, '0'); // 119 a 126 - Data do juro de mora
-            reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0127, 015, 2, boleto.ValorJurosDia, '0'); // 127 a 141 - Juros de mora por dia/taxa
+            reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0127, 015, 2, (boleto.ValorJurosDia != 0) ? boleto.ValorJurosDia : ((boleto.PercentualJurosDia != 0) ? boleto.PercentualJurosDia : 0), '0'); // 127 a 141 - Juros de mora por dia/taxa
 
             // 0 - Sem Desconto / 1 - Valor / 2 - Percentual / 3 - Valor por Atencipacao / 7 - Cancelamento de Desconto
             reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0142, 001, 0, boleto.ValorDesconto != 0 ? "1" : "0", '0'); // 142 a 142 - Código do desconto 1
@@ -171,7 +171,7 @@ namespace BoletoNetCore
             reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0151, 015, 2, boleto.ValorDesconto, '0');  // 151 a 165 - Valor percentual a ser concedido
             reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0166, 015, 2, boleto.ValorIOF, '0'); // 166 a 180 - Valor do IOF a ser recolhido
             reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0181, 015, 2, boleto.ValorAbatimento, '0'); // 181 a 195 - Valor do abatimento
-            reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0196, 025, 0, boleto.NumeroDocumento, ' '); // 196 a 220 - Identificação do título na empresa
+            reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0196, 025, 0, boleto.NumeroControleParticipante, ' '); // 196 a 220 - Identificação do título na empresa
 
             /* protesto
             1 - Protestar automaticamente
