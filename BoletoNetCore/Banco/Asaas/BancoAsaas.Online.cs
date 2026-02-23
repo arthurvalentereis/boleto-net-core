@@ -25,8 +25,8 @@ namespace BoletoNetCore
                 if (this._httpClient == null)
                 {
                     this._httpClient = new HttpClient();
-                    //this._httpClient.BaseAddress = new Uri("https://sandbox.asaas.com/api/v3/");// Homologação
-                    this._httpClient.BaseAddress = new Uri("https://api.asaas.com/v3/");//Prod
+                    this._httpClient.BaseAddress = new Uri("https://sandbox.asaas.com/api/v3/");// Homologação
+                    //this._httpClient.BaseAddress = new Uri("https://api.asaas.com/v3/");//Prod
                     
                     this._httpClient.DefaultRequestHeaders.Add("accept", "application/json");
                 }
@@ -60,7 +60,7 @@ namespace BoletoNetCore
         public Task<string> GerarToken()
         {
             this.Token = this.ChaveApi;
-            this._httpClient.DefaultRequestHeaders.Add("access_token", this.Token);
+            this.httpClient.DefaultRequestHeaders.Add("access_token", this.Token);
             return Task.FromResult(this.Token);
         }
 
@@ -253,8 +253,9 @@ namespace BoletoNetCore
             var requestCustomer = new HttpRequestMessage(HttpMethod.Get, $"payments/{idCobranca}/pixQrCode");
             requestCustomer.Headers.Add("accept", "application/json");
             requestCustomer.Headers.Add("access_token", this.Token);
-            var responseCustomer = await this.httpClient.SendAsync(requestCustomer);
-            var retor = await responseCustomer.Content.ReadFromJsonAsync<Pix>();
+            //var responseCustomer = await this.httpClient.SendAsync(requestCustomer);
+            var retor = await AbstractProxy.GenericRequest<Pix>(this.httpClient, requestCustomer);
+
             return retor;
         }
         private async Task<CustomerList> VerificaCustomer(string cpfCnpj)
@@ -295,6 +296,18 @@ namespace BoletoNetCore
             //await this.CheckHttpResponseError(response);
 
             //var ret = await response.Content.ReadFromJsonAsync<Customer>();
+            return retor;
+        }
+
+        public async Task<WebHookAssasResponse> AtualizarCobranca(WebHookAssasResponse request)
+        {
+            var url = $"payments/{request.payment.id}";
+            var requestCustomer = new HttpRequestMessage(HttpMethod.Put, url);
+            requestCustomer.Headers.Add("accept", "application/json");
+            requestCustomer.Headers.Add("access_token", this.ChaveApi);
+            requestCustomer.Headers.Add("user-agent", "C# API");
+            requestCustomer.Content = JsonContent.Create(request);
+            var retor = await AbstractProxy.GenericRequest<WebHookAssasResponse>(this.httpClient, requestCustomer);
             return retor;
         }
     }

@@ -186,5 +186,6 @@ namespace BoletoNetCore
         Task<PaymentCreditCardResponse> GerarCobrancaCartao(RequestCobranca Cartao);
         Task<BankSlip> GerarCobrancaBoleto(RequestCobranca boleto);
         Task<Pix> GerarPix(string idCobranca);
+        Task<WebHookAssasResponse> AtualizarCobranca(WebHookAssasResponse request);
     }
 }

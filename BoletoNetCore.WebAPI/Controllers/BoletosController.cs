@@ -127,7 +127,7 @@ namespace BoletoNetCore.WebAPI.Controllers
                 var banco = Banco.Instancia(metodosUteis.RetornarBancoEmissor(tipoBancoEmissor));
                 IBancoOnlineRest b = (IBancoOnlineRest)banco;
                 b.ChaveApi = chaveApi;
-                b.GerarToken();
+                await b.GerarToken();
                 switch (tipoCobranca)
                 {
                     case "LINK":
@@ -163,7 +163,39 @@ namespace BoletoNetCore.WebAPI.Controllers
                 return StatusCode(StatusCodes.Status400BadRequest, retorno);
             }
         }
-        
-        
+
+        /// <summary>
+        /// Endpoint para Atualizar boleto via webservice no banco.
+        /// </summary>
+        /// <remarks>
+        /// ## Tipo de banco emissor
+        /// O tipo de banco e chave API deve ser informado dentro do parâmetro para que nossa API possa identificar de que banco se trata
+        /// - Itau = 341
+        /// - Asaas = 461
+        /// - Sicredi = 748
+        /// </remarks>
+        /// <returns>Retornar o HTML do boleto.</returns>
+        [ProducesResponseType(typeof(DadosBoleto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        [HttpPut("AtualizarCobranca")]
+        public async Task<IActionResult> AtualizarCobranca(WebHookAssasResponse dadosBoleto, int tipoBancoEmissor, string chaveApi)
+        {
+            try
+            {
+                var banco = Banco.Instancia(metodosUteis.RetornarBancoEmissor(tipoBancoEmissor));
+                IBancoOnlineRest b = (IBancoOnlineRest)banco;
+                b.ChaveApi = chaveApi;
+                b.GerarToken();
+                return Ok(b.AtualizarCobranca(dadosBoleto));
+            }
+            catch (Exception ex)
+            {
+                var retorno = metodosUteis.RetornarErroPersonalizado((int)HttpStatusCode.InternalServerError, "Requisição Inválida", $"Detalhe do erro: {ex.Message}", string.Empty);
+                return StatusCode(StatusCodes.Status400BadRequest, retorno);
+            }
+        }
+
+
     }
 }

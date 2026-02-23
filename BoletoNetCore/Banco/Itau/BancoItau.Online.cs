@@ -52,6 +52,11 @@ namespace BoletoNetCore
         {
             throw new NotImplementedException();
         }
+
+        public Task<WebHookAssasResponse> AtualizarCobranca(WebHookAssasResponse request)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 
