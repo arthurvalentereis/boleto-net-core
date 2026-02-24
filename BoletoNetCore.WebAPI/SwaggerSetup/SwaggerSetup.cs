@@ -9,6 +9,7 @@ namespace BoletoNetCore.WebAPI.SwaggerSetup
         {
             services.AddSwaggerGen(c =>
             {
+                c.CustomSchemaIds(type => type.FullName);
                 c.SwaggerDoc("v1",
                 new OpenApiInfo
                 {

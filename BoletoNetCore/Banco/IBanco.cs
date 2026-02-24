@@ -1,4 +1,5 @@
-﻿using BoletoNetCore.CartãoDeCredito;
+using BoletoNetCore.CartãoDeCredito;
+using BoletoNetCore.Cobrancas;
 using BoletoNetCore.LinkPagamento;
 using System;
 using System.Collections.Generic;
@@ -206,5 +207,6 @@ namespace BoletoNetCore
         Task<BankSlip> GerarCobrancaBoleto(RequestCobranca boleto);
         Task<Pix> GerarPix(string idCobranca);
         Task<WebHookAssasResponse> AtualizarCobranca(WebHookAssasResponse request);
+        Task<ListaCobrancasResponse> ListarCobrancas(ListaCobrancasFiltros filtros);
     }
 }

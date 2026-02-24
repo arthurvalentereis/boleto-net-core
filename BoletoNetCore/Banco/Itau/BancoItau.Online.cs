@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BoletoNetCore.CartãoDeCredito;
+using BoletoNetCore.Cobrancas;
 using BoletoNetCore.Exceptions;
 using BoletoNetCore.LinkPagamento;
 using static System.String;
@@ -56,6 +57,18 @@ namespace BoletoNetCore
         public Task<WebHookAssasResponse> AtualizarCobranca(WebHookAssasResponse request)
         {
             throw new NotImplementedException();
+        }
+
+        public Task<ListaCobrancasResponse> ListarCobrancas(ListaCobrancasFiltros filtros)
+        {
+            return Task.FromResult(new ListaCobrancasResponse
+            {
+                Data = new List<CobrancaItemDto>(),
+                TotalCount = 0,
+                HasMore = false,
+                Limit = filtros?.Limit ?? 10,
+                Offset = filtros?.Offset ?? 0
+            });
         }
     }
 }

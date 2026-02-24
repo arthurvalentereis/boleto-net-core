@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.Http.Json;
 using System.Net.Http;
 using System.Net;
@@ -9,7 +9,9 @@ using System.Drawing;
 using BoletoNetCore.Extensions;
 using BoletoNetCore.CartãoDeCredito;
 using BoletoNetCore.Clientes;
+using BoletoNetCore.Cobrancas;
 using System.Linq;
+using System.Text;
 using Leader.Infrasctruture.Repositories.Base;
 
 namespace BoletoNetCore
@@ -25,9 +27,9 @@ namespace BoletoNetCore
                 if (this._httpClient == null)
                 {
                     this._httpClient = new HttpClient();
-                    this._httpClient.BaseAddress = new Uri("https://sandbox.asaas.com/api/v3/");// Homologação
-                    //this._httpClient.BaseAddress = new Uri("https://api.asaas.com/v3/");//Prod
-                    
+                    //this._httpClient.BaseAddress = new Uri("https://sandbox.asaas.com/api/v3/");// Homologação
+                    this._httpClient.BaseAddress = new Uri("https://api.asaas.com/v3/");//Prod
+
                     this._httpClient.DefaultRequestHeaders.Add("accept", "application/json");
                 }
 
@@ -309,6 +311,124 @@ namespace BoletoNetCore
             requestCustomer.Content = JsonContent.Create(request);
             var retor = await AbstractProxy.GenericRequest<WebHookAssasResponse>(this.httpClient, requestCustomer);
             return retor;
+        }
+
+        public async Task<ListaCobrancasResponse> ListarCobrancas(ListaCobrancasFiltros filtros)
+        {
+            var queryString = BuildPaymentsQueryString(filtros);
+            var uri = string.IsNullOrEmpty(queryString) ? "payments" : "payments?" + queryString;
+            var request = new HttpRequestMessage(HttpMethod.Get, uri);
+            request.Headers.Add("accept", "application/json");
+            request.Headers.Add("access_token", this.ChaveApi);
+            request.Headers.Add("user-agent", "C# API");
+
+            var asaasResponse = await AbstractProxy.GenericRequest<AsaasPaymentListResponse>(this.httpClient, request, null);
+            if (asaasResponse == null)
+                return new ListaCobrancasResponse { Limit = filtros?.Limit ?? 10, Offset = filtros?.Offset ?? 0 };
+            return MapToListaCobrancasResponse(asaasResponse);
+        }
+
+        private static string BuildPaymentsQueryString(ListaCobrancasFiltros filtros)
+        {
+            if (filtros == null) return string.Empty;
+            var sb = new StringBuilder();
+            void Add(string key, object value)
+            {
+                if (value == null) return;
+                if (sb.Length > 0) sb.Append('&');
+                sb.Append(key).Append('=').Append(Uri.EscapeDataString(value.ToString()));
+            }
+            Add("offset", filtros.Offset);
+            Add("limit", filtros.Limit);
+            Add("customer", filtros.Customer);
+            Add("customerGroupName", filtros.CustomerGroupName);
+            Add("billingType", filtros.BillingType);
+            Add("status", filtros.Status);
+            Add("subscription", filtros.Subscription);
+            Add("installment", filtros.Installment);
+            Add("externalReference", filtros.ExternalReference);
+            Add("paymentDate", filtros.PaymentDate);
+            Add("invoiceStatus", filtros.InvoiceStatus);
+            Add("estimatedCreditDate", filtros.EstimatedCreditDate);
+            if (filtros.Anticipated.HasValue) Add("anticipated", filtros.Anticipated.Value.ToString().ToLowerInvariant());
+            if (filtros.Anticipable.HasValue) Add("anticipable", filtros.Anticipable.Value.ToString().ToLowerInvariant());
+            Add("dateCreated[ge]", filtros.DateCreatedGe);
+            Add("dateCreated[le]", filtros.DateCreatedLe);
+            Add("paymentDate[ge]", filtros.PaymentDateGe);
+            Add("paymentDate[le]", filtros.PaymentDateLe);
+            Add("estimatedCreditDate[ge]", filtros.EstimatedCreditDateGe);
+            Add("estimatedCreditDate[le]", filtros.EstimatedCreditDateLe);
+            Add("dueDate[ge]", filtros.DueDateGe);
+            Add("dueDate[le]", filtros.DueDateLe);
+            Add("user", filtros.User);
+            Add("checkoutSession", filtros.CheckoutSession);
+            Add("pixQrCodeId", filtros.PixQrCodeId);
+            return sb.ToString();
+        }
+
+        private static ListaCobrancasResponse MapToListaCobrancasResponse(AsaasPaymentListResponse asaas)
+        {
+            var result = new ListaCobrancasResponse
+            {
+                HasMore = asaas.HasMore,
+                TotalCount = asaas.TotalCount,
+                Limit = asaas.Limit,
+                Offset = asaas.Offset
+            };
+            if (asaas.Data == null) return result;
+            foreach (var item in asaas.Data)
+                result.Data.Add(MapToCobrancaItemDto(item));
+            return result;
+        }
+
+        private static CobrancaItemDto MapToCobrancaItemDto(AsaasPaymentListItem item)
+        {
+            return new CobrancaItemDto
+            {
+                Id = item.Id,
+                DateCreated = ParseDate(item.DateCreated),
+                Customer = item.Customer,
+                Subscription = item.Subscription,
+                Installment = item.Installment,
+                CheckoutSession = item.CheckoutSession,
+                PaymentLink = item.PaymentLink,
+                Value = item.Value,
+                NetValue = item.NetValue,
+                OriginalValue = item.OriginalValue,
+                InterestValue = item.InterestValue,
+                Description = item.Description,
+                BillingType = item.BillingType,
+                CanBePaidAfterDueDate = item.CanBePaidAfterDueDate,
+                PixTransaction = item.PixTransaction,
+                PixQrCodeId = item.PixQrCodeId,
+                Status = item.Status,
+                DueDate = ParseDate(item.DueDate),
+                OriginalDueDate = ParseDate(item.OriginalDueDate),
+                PaymentDate = ParseDate(item.PaymentDate),
+                ClientPaymentDate = ParseDate(item.ClientPaymentDate),
+                InstallmentNumber = item.InstallmentNumber,
+                InvoiceUrl = item.InvoiceUrl,
+                InvoiceNumber = item.InvoiceNumber,
+                ExternalReference = item.ExternalReference,
+                Deleted = item.Deleted,
+                Anticipated = item.Anticipated,
+                Anticipable = item.Anticipable,
+                CreditDate = ParseDate(item.CreditDate),
+                EstimatedCreditDate = ParseDate(item.EstimatedCreditDate),
+                TransactionReceiptUrl = item.TransactionReceiptUrl,
+                NossoNumero = item.NossoNumero,
+                BankSlipUrl = item.BankSlipUrl,
+                Discount = item.Discount,
+                Fine = item.Fine,
+                Interest = item.Interest
+            };
+        }
+
+        private static DateTime? ParseDate(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return null;
+            if (DateTime.TryParse(value, out var d)) return d;
+            return null;
         }
     }
 

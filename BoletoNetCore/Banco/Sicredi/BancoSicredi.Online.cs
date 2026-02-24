@@ -1,6 +1,8 @@
 using BoletoNetCore.CartãoDeCredito;
+using BoletoNetCore.Cobrancas;
 using BoletoNetCore.LinkPagamento;
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -165,6 +167,18 @@ namespace BoletoNetCore
         public Task<WebHookAssasResponse> AtualizarCobranca(WebHookAssasResponse request)
         {
             throw new NotImplementedException();
+        }
+
+        public Task<ListaCobrancasResponse> ListarCobrancas(ListaCobrancasFiltros filtros)
+        {
+            return Task.FromResult(new ListaCobrancasResponse
+            {
+                Data = new List<CobrancaItemDto>(),
+                TotalCount = 0,
+                HasMore = false,
+                Limit = filtros?.Limit ?? 10,
+                Offset = filtros?.Offset ?? 0
+            });
         }
     }
 

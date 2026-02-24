@@ -32,7 +32,7 @@ namespace Leader.Infrasctruture.Repositories.Base
             HttpResponseMessage response = new HttpResponseMessage();
             var url = client.BaseAddress.AbsoluteUri + requestMessage.RequestUri;
 
-            if (!url.Contains("?")) url += "?";
+            if (!url.Contains("?") && query != null) url += "?";
             if (query != null)
                 url += GetQueryString(query);
 

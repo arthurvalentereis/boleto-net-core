@@ -1,8 +1,10 @@
+using BoletoNetCore.WebAPI.Extensions;
 using BoletoNetCore.WebAPI.SwaggerSetup;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddCorsPolicy();
 builder.Services.AddSwagger();
 builder.Services.AddEndpointsApiExplorer();
 
