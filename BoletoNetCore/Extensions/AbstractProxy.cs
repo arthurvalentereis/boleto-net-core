@@ -42,7 +42,7 @@ namespace Leader.Infrasctruture.Repositories.Base
                     response = await client.SendAsync(requestMessage);
                     break;
                 case "GET":
-                    response = await client.GetAsync(url);
+                    response = await client.SendAsync(requestMessage);
                     break;
                 case "PUT":
                     response = await client.SendAsync(requestMessage);

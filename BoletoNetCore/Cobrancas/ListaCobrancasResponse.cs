@@ -13,6 +13,6 @@ namespace BoletoNetCore.Cobrancas
         public int TotalCount { get; set; }
         public int Limit { get; set; }
         public int Offset { get; set; }
-        public List<CobrancaItemDto> Data { get; set; } = new List<CobrancaItemDto>();
+        public List<CobrancaItemResponse> Data { get; set; } = new List<CobrancaItemResponse>();
     }
 }

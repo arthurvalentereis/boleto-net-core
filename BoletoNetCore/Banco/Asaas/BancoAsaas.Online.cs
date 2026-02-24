@@ -381,9 +381,9 @@ namespace BoletoNetCore
             return result;
         }
 
-        private static CobrancaItemDto MapToCobrancaItemDto(AsaasPaymentListItem item)
+        private static CobrancaItemResponse MapToCobrancaItemDto(AsaasPaymentListItem item)
         {
-            return new CobrancaItemDto
+            return new CobrancaItemResponse
             {
                 Id = item.Id,
                 DateCreated = ParseDate(item.DateCreated),
@@ -418,9 +418,23 @@ namespace BoletoNetCore
                 TransactionReceiptUrl = item.TransactionReceiptUrl,
                 NossoNumero = item.NossoNumero,
                 BankSlipUrl = item.BankSlipUrl,
-                Discount = item.Discount,
-                Fine = item.Fine,
-                Interest = item.Interest
+                Discount = item.Discount is null ? null : new DiscountResponse()
+                {
+                    dueDateLimitDays = item.Discount.dueDateLimitDays,
+                    limitDate = item.Discount.limitDate,
+                    type = item.Discount.type,
+                    value = item.Discount.value
+                },
+                Fine = item.Fine is null ? null : new FineResponse()
+                {
+                    type = item.Discount.type,
+                    value = item.Discount.value
+                },
+                Interest = item.Interest is null ? null : new InterestResponse()
+                {
+                    type = item.Discount.type,
+                    value = item.Discount.value
+                },
             };
         }
 

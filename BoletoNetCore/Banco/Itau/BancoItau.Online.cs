@@ -63,7 +63,7 @@ namespace BoletoNetCore
         {
             return Task.FromResult(new ListaCobrancasResponse
             {
-                Data = new List<CobrancaItemDto>(),
+                Data = new List<CobrancaItemResponse>(),
                 TotalCount = 0,
                 HasMore = false,
                 Limit = filtros?.Limit ?? 10,

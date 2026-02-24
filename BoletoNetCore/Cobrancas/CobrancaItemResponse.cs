@@ -7,7 +7,7 @@ namespace BoletoNetCore.Cobrancas
     /// Contrato genérico de item de cobrança na listagem.
     /// Entidade normalizada; cada banco (ex.: Asaas em Banco/Asaas/Models) mapeia seu response para este DTO.
     /// </summary>
-    public class CobrancaItemDto
+    public class CobrancaItemResponse
     {
         public string Id { get; set; }
         public DateTime? DateCreated { get; set; }
@@ -42,8 +42,29 @@ namespace BoletoNetCore.Cobrancas
         public string TransactionReceiptUrl { get; set; }
         public string NossoNumero { get; set; }
         public string BankSlipUrl { get; set; }
-        public Discount Discount { get; set; }
-        public Fine Fine { get; set; }
-        public Interest Interest { get; set; }
+        public DiscountResponse Discount { get; set; }
+        public FineResponse Fine { get; set; }
+        public InterestResponse Interest { get; set; }
     }
+
+    public class DiscountResponse
+    {
+        public decimal value { get; set; }
+        public object limitDate { get; set; }
+        public int dueDateLimitDays { get; set; }
+        public string type { get; set; }
+    }
+
+    public class FineResponse
+    {
+        public decimal value { get; set; }
+        public string type { get; set; }
+    }
+
+    public class InterestResponse
+    {
+        public decimal value { get; set; }
+        public string type { get; set; }
+    }
+
 }
