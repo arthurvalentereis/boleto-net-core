@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BoletoNetCore.CartãoDeCredito;
+using BoletoNetCore.Clientes;
 using BoletoNetCore.Cobrancas;
 using BoletoNetCore.Exceptions;
 using BoletoNetCore.LinkPagamento;
@@ -64,6 +65,18 @@ namespace BoletoNetCore
             return Task.FromResult(new ListaCobrancasResponse
             {
                 Data = new List<CobrancaItemResponse>(),
+                TotalCount = 0,
+                HasMore = false,
+                Limit = filtros?.Limit ?? 10,
+                Offset = filtros?.Offset ?? 0
+            });
+        }
+
+        public Task<ListaClientesResponse> ListarClientes(ListaClientesFiltros filtros)
+        {
+            return Task.FromResult(new ListaClientesResponse
+            {
+                Data = new List<Customer>(),
                 TotalCount = 0,
                 HasMore = false,
                 Limit = filtros?.Limit ?? 10,

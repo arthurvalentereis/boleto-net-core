@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System;
 
 namespace BoletoNetCore.Clientes
@@ -15,7 +15,7 @@ namespace BoletoNetCore.Clientes
     {
         public string Object { get; set; }
         public string Id { get; set; }
-        public DateTime DateCreated { get; set; }
+        public DateTime? DateCreated { get; set; }
         public string Name { get; set; }
         public string Email { get; set; }
         public string Company { get; set; }
@@ -39,7 +39,8 @@ namespace BoletoNetCore.Clientes
         public string CannotBeDeletedReason { get; set; }
         public bool CanEdit { get; set; }
         public string CannotEditReason { get; set; }
-        public int City { get; set; }
+        /// <summary>Identificador único da cidade no Asaas. Pode ser null quando não informado.</summary>
+        public int? City { get; set; }
         public string CityName { get; set; }
         public string State { get; set; }
         public string Country { get; set; }

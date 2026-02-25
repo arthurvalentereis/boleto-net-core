@@ -328,6 +328,55 @@ namespace BoletoNetCore
             return MapToListaCobrancasResponse(asaasResponse);
         }
 
+        public async Task<ListaClientesResponse> ListarClientes(ListaClientesFiltros filtros)
+        {
+            var queryString = BuildCustomersQueryString(filtros);
+            var uri = string.IsNullOrEmpty(queryString) ? "customers" : "customers?" + queryString;
+            var request = new HttpRequestMessage(HttpMethod.Get, uri);
+            request.Headers.Add("accept", "application/json");
+            request.Headers.Add("access_token", this.ChaveApi);
+            request.Headers.Add("user-agent", "C# API");
+
+            var asaasResponse = await AbstractProxy.GenericRequest<CustomerList>(this.httpClient, request, null);
+            if (asaasResponse == null)
+                return new ListaClientesResponse { Limit = filtros?.Limit ?? 10, Offset = filtros?.Offset ?? 0 };
+            return MapToListaClientesResponse(asaasResponse);
+        }
+
+        private static string BuildCustomersQueryString(ListaClientesFiltros filtros)
+        {
+            if (filtros == null) return string.Empty;
+            var sb = new StringBuilder();
+            void Add(string key, object value)
+            {
+                if (value == null) return;
+                if (sb.Length > 0) sb.Append('&');
+                sb.Append(key).Append('=').Append(Uri.EscapeDataString(value.ToString()));
+            }
+            Add("offset", filtros.Offset);
+            Add("limit", filtros.Limit);
+            Add("name", filtros.Name);
+            Add("email", filtros.Email);
+            Add("cpfCnpj", filtros.CpfCnpj);
+            Add("groupName", filtros.GroupName);
+            Add("externalReference", filtros.ExternalReference);
+            return sb.ToString();
+        }
+
+        private static ListaClientesResponse MapToListaClientesResponse(CustomerList asaas)
+        {
+            var result = new ListaClientesResponse
+            {
+                HasMore = asaas.HasMore,
+                TotalCount = asaas.TotalCount,
+                Limit = asaas.Limit,
+                Offset = asaas.Offset
+            };
+            if (asaas.Data != null)
+                result.Data.AddRange(asaas.Data);
+            return result;
+        }
+
         private static string BuildPaymentsQueryString(ListaCobrancasFiltros filtros)
         {
             if (filtros == null) return string.Empty;
