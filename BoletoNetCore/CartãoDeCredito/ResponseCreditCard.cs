@@ -8,7 +8,6 @@ namespace BoletoNetCore.CartãoDeCredito
         public string CreditCardBrand { get; set; }
         public string CreditCardToken { get; set; }
     }
-
     public class PaymentBase
     {
         public string Object { get; set; }

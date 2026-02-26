@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System;
 
 namespace BoletoNetCore
@@ -7,6 +7,13 @@ namespace BoletoNetCore
     [Browsable(false)]
     public class LinkPagamentoRequest
     {
+        /// <summary>
+        /// Construtor sem parâmetros para deserialização (ex.: API).
+        /// </summary>
+        public LinkPagamentoRequest()
+        {
+        }
+
         /// <summary>
         /// Construtor da Classe LinkPagamento
         /// </summary>

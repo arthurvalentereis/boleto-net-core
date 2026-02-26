@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using BoletoNetCore.CartãoDeCredito;
 using BoletoNetCore.Clientes;
 using BoletoNetCore.Cobrancas;
+using BoletoNetCore.Enums;
 using BoletoNetCore.Exceptions;
 using BoletoNetCore.LinkPagamento;
 using static System.String;
@@ -49,7 +50,24 @@ namespace BoletoNetCore
         {
             throw new NotImplementedException();
         }
-        
+
+        public async Task<object> GerarCobrancaPorTipo(TipoCobranca tipo, GerarCobrancaRequest request)
+        {
+            switch (tipo)
+            {
+                case TipoCobranca.LINK:
+                    return await GerarLinkPagamento(request.LinkPagamento ?? throw new ArgumentException("LinkPagamento é obrigatório para tipo LINK."));
+                case TipoCobranca.CREDIT_CARD:
+                    return await GerarCobrancaCartao(request.RequestCobranca ?? throw new ArgumentException("RequestCobranca é obrigatório para tipo CREDIT_CARD."));
+                case TipoCobranca.BOLETO_PIX:
+                    return await GerarCobrancaBoleto(request.RequestCobranca ?? throw new ArgumentException("RequestCobranca é obrigatório para tipo BOLETO_PIX."));
+                case TipoCobranca.BOLETO:
+                case TipoCobranca.PIX:
+                default:
+                    throw new ArgumentException($"Tipo de cobrança '{tipo}' não suportado por este método. Use LINK, CREDIT_CARD ou BOLETO_PIX.");
+            }
+        }
+
         public Task<Pix> GerarPix(string idCobranca)
         {
             throw new NotImplementedException();

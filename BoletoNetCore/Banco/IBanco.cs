@@ -1,6 +1,7 @@
 using BoletoNetCore.CartãoDeCredito;
 using BoletoNetCore.Clientes;
 using BoletoNetCore.Cobrancas;
+using BoletoNetCore.Enums;
 using BoletoNetCore.LinkPagamento;
 using System;
 using System.Collections.Generic;
@@ -206,6 +207,15 @@ namespace BoletoNetCore
         Task<LinkPagamentoResponse> GerarLinkPagamento(LinkPagamentoRequest boleto);
         Task<PaymentCreditCardResponse> GerarCobrancaCartao(RequestCobranca Cartao);
         Task<BankSlip> GerarCobrancaBoleto(RequestCobranca boleto);
+
+        /// <summary>
+        /// Orquestra a geração de cobrança conforme o tipo informado.
+        /// Encaminha para GerarLinkPagamento, GerarCobrancaCartao ou GerarCobrancaBoleto.
+        /// </summary>
+        /// <param name="tipo">Tipo de cobrança (LINK, CREDIT_CARD ou BOLETO_PIX).</param>
+        /// <param name="request">Dados da cobrança (LinkPagamento e/ou RequestCobranca conforme o tipo).</param>
+        /// <returns>LinkPagamentoResponse, PaymentCreditCardResponse ou BankSlip conforme o tipo.</returns>
+        Task<object> GerarCobrancaPorTipo(TipoCobranca tipo, GerarCobrancaRequest request);
         Task<Pix> GerarPix(string idCobranca);
         Task<WebHookAssasResponse> AtualizarCobranca(WebHookAssasResponse request);
         Task<ListaCobrancasResponse> ListarCobrancas(ListaCobrancasFiltros filtros);

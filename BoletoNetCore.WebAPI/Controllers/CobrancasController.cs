@@ -1,5 +1,6 @@
 using BoletoNetCore;
 using BoletoNetCore.Cobrancas;
+using BoletoNetCore.Enums;
 using BoletoNetCore.WebAPI.Extensions;
 using BoletoNetCore.WebAPI.Models;
 using Microsoft.AspNetCore.Http;
@@ -15,8 +16,12 @@ namespace BoletoNetCore.WebAPI.Controllers
     [ApiController]
     public class CobrancasController : ControllerBase
     {
-        private readonly MetodosUteis _metodosUteis = new MetodosUteis();
+        MetodosUteis _metodosUteis = new MetodosUteis();
 
+        public CobrancasController()
+        {
+
+        }
         /// <summary>
         /// Lista cobranças do banco informado (paginação e filtros opcionais).
         /// </summary>
@@ -180,5 +185,134 @@ namespace BoletoNetCore.WebAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, retorno);
             }
         }
+
+        /// <summary>
+        /// Gera cobrança via API do banco (cartão de crédito ou boleto).
+        /// Para link de pagamento, use o endpoint POST /api/LinkPagamentos/GerarLinkPagamento.
+        /// </summary>
+        /// <remarks>
+        /// ## Tipo de banco emissor
+        /// - Itau = 341
+        /// - Asaas = 461
+        /// - Sicredi = 748
+        /// ## Tipo Cobrança
+        /// - CREDIT_CARD = Cartão de crédito
+        /// - BOLETO_PIX = Boleto via API (inclui PIX)
+        /// - BOLETO = Boleto
+        /// </remarks>
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        [HttpPost("GerarCobranca")]
+        public async Task<IActionResult> GerarCobranca(
+            [FromBody] RequestGerarCobranca request,
+            [FromQuery] int tipoBancoEmissor,
+            [FromQuery] string tipoCobranca,
+            [FromQuery] string chaveApi)
+        {
+            try
+            {
+                if (request?.RequestCobranca == null)
+                {
+                    var err = _metodosUteis.RetornarErroPersonalizado(
+                        (int)HttpStatusCode.BadRequest,
+                        "Requisição inválida",
+                        "RequestCobranca não informado.",
+                        "/api/Cobrancas/GerarCobranca");
+                    return BadRequest(err);
+                }
+
+                if (string.IsNullOrWhiteSpace(chaveApi))
+                {
+                    var err = _metodosUteis.RetornarErroPersonalizado(
+                        (int)HttpStatusCode.BadRequest,
+                        "Requisição inválida",
+                        "Chave da API não informada.",
+                        "/api/Cobrancas/GerarCobranca");
+                    return BadRequest(err);
+                }
+
+                if (!Enum.TryParse<TipoCobranca>(tipoCobranca, ignoreCase: true, out var tipo) ||
+                    (tipo != TipoCobranca.CREDIT_CARD && tipo != TipoCobranca.BOLETO_PIX))
+                {
+                    var err = _metodosUteis.RetornarErroPersonalizado(
+                        (int)HttpStatusCode.BadRequest,
+                        "Requisição inválida",
+                        "Tipo de cobrança inválido. Use CREDIT_CARD, BOLETO ou BOLETO_PIX. Para link de pagamento, use /api/LinkPagamentos/GerarLinkPagamento.",
+                        "/api/Cobrancas/GerarCobranca");
+                    return BadRequest(err);
+                }
+
+                var banco = Banco.Instancia(_metodosUteis.RetornarBancoEmissor(tipoBancoEmissor));
+                if (banco is not IBancoOnlineRest rest)
+                {
+                    var err = _metodosUteis.RetornarErroPersonalizado(
+                        (int)HttpStatusCode.BadRequest,
+                        "Requisição inválida",
+                        "Banco não suporta geração de cobrança via API.",
+                        "/api/Cobrancas/GerarCobranca");
+                    return BadRequest(err);
+                }
+
+                rest.ChaveApi = chaveApi;
+                await rest.GerarToken();
+
+                var requestCobranca = new GerarCobrancaRequest { RequestCobranca = request.RequestCobranca };
+                var retorno = await rest.GerarCobrancaPorTipo(tipo, requestCobranca);
+
+                return Ok(retorno);
+            }
+            catch (ArgumentException ex)
+            {
+                var retorno = _metodosUteis.RetornarErroPersonalizado(
+                    (int)HttpStatusCode.BadRequest,
+                    "Requisição inválida",
+                    ex.Message,
+                    "/api/Cobrancas/GerarCobranca");
+                return BadRequest(retorno);
+            }
+            catch (Exception ex)
+            {
+                var retorno = _metodosUteis.RetornarErroPersonalizado(
+                    (int)HttpStatusCode.InternalServerError,
+                    "Erro interno",
+                    $"Detalhe do erro: {ex.Message}",
+                    string.Empty);
+                return StatusCode(StatusCodes.Status500InternalServerError, retorno);
+            }
+        }
+
+        /// <summary>
+        /// Endpoint para Atualizar boleto via webservice no banco.
+        /// </summary>
+        /// <remarks>
+        /// ## Tipo de banco emissor
+        /// O tipo de banco e chave API deve ser informado dentro do parâmetro para que nossa API possa identificar de que banco se trata
+        /// - Itau = 341
+        /// - Asaas = 461
+        /// - Sicredi = 748
+        /// </remarks>
+        /// <returns>Retornar o HTML do boleto.</returns>
+        [ProducesResponseType(typeof(DadosBoleto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        [HttpPut("AtualizarCobranca")]
+        public async Task<IActionResult> AtualizarCobranca(WebHookAssasResponse dadosBoleto, int tipoBancoEmissor, string chaveApi)
+        {
+            try
+            {
+                var banco = Banco.Instancia(_metodosUteis.RetornarBancoEmissor(tipoBancoEmissor));
+                IBancoOnlineRest b = (IBancoOnlineRest)banco;
+                b.ChaveApi = chaveApi;
+                b.GerarToken();
+                return Ok(b.AtualizarCobranca(dadosBoleto));
+            }
+            catch (Exception ex)
+            {
+                var retorno = _metodosUteis.RetornarErroPersonalizado((int)HttpStatusCode.InternalServerError, "Requisição Inválida", $"Detalhe do erro: {ex.Message}", string.Empty);
+                return StatusCode(StatusCodes.Status400BadRequest, retorno);
+            }
+        }
+
     }
 }

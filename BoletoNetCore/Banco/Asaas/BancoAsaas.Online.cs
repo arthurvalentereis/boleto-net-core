@@ -3,6 +3,8 @@ using System.Net.Http.Json;
 using System.Net.Http;
 using System.Net;
 using System.Threading.Tasks;
+using BoletoNetCore.Cobrancas;
+using BoletoNetCore.Enums;
 using BoletoNetCore.LinkPagamento;
 using System.Collections.Generic;
 using System.Drawing;
@@ -27,8 +29,8 @@ namespace BoletoNetCore
                 if (this._httpClient == null)
                 {
                     this._httpClient = new HttpClient();
-                    //this._httpClient.BaseAddress = new Uri("https://sandbox.asaas.com/api/v3/");// Homologação
-                    this._httpClient.BaseAddress = new Uri("https://api.asaas.com/v3/");//Prod
+                    this._httpClient.BaseAddress = new Uri("https://sandbox.asaas.com/api/v3/");// Homologação
+                    //this._httpClient.BaseAddress = new Uri("https://api.asaas.com/v3/");//Prod
 
                     this._httpClient.DefaultRequestHeaders.Add("accept", "application/json");
                 }
@@ -225,7 +227,6 @@ namespace BoletoNetCore
                 request.Content = JsonContent.Create(requestCreditCard);
                 var retorno = await AbstractProxy.GenericRequest<PaymentCreditCardResponse>(this.httpClient, request);
 
-            //var ret = await response.Content.ReadFromJsonAsync<PaymentCreditCardResponse>();
                 return retorno;
 
         }
@@ -245,17 +246,39 @@ namespace BoletoNetCore
             request.Content = JsonContent.Create(requestInvoice);
             var retorno = await AbstractProxy.GenericRequest<BankSlip>(this.httpClient, request);
 
-            //var ret = await response.Content.ReadFromJsonAsync<BankSlip>();
-            
             return retorno;
 
         }
+        public async Task<object> GerarCobrancaPorTipo(TipoCobranca tipo, GerarCobrancaRequest request)
+        {
+            switch (tipo)
+            {
+                case TipoCobranca.LINK:
+                    return await GerarLinkPagamento(request.LinkPagamento ?? throw new ArgumentException("LinkPagamento é obrigatório para tipo LINK."));
+                case TipoCobranca.CREDIT_CARD:
+                    return await GerarCobrancaCartao(request.RequestCobranca ?? throw new ArgumentException("RequestCobranca é obrigatório para tipo CREDIT_CARD."));
+                case TipoCobranca.BOLETO_PIX:
+                    return await GerarCobrancaBoletoComPix(request.RequestCobranca ?? throw new ArgumentException("RequestCobranca é obrigatório para tipo BOLETO_PIX."));
+                case TipoCobranca.BOLETO:
+                    return await GerarCobrancaBoleto(request.RequestCobranca ?? throw new ArgumentException("RequestCobranca é obrigatório para tipo BOLETO_PIX."));
+                case TipoCobranca.PIX:
+                default:
+                    throw new ArgumentException($"Tipo de cobrança '{tipo}' não suportado por este método. Use LINK, CREDIT_CARD, BOLETO ou BOLETO_PIX.");
+            }
+        }
+
+        private async Task<BankSlip> GerarCobrancaBoletoComPix(RequestCobranca requestInvoice)
+        {
+            var retorno = await GerarCobrancaBoleto(requestInvoice);
+            retorno.Pix = await GerarPix(retorno.Id);
+            return retorno;
+        }
+
         public async Task<Pix> GerarPix(string idCobranca)
         {
             var requestCustomer = new HttpRequestMessage(HttpMethod.Get, $"payments/{idCobranca}/pixQrCode");
             requestCustomer.Headers.Add("accept", "application/json");
             requestCustomer.Headers.Add("access_token", this.Token);
-            //var responseCustomer = await this.httpClient.SendAsync(requestCustomer);
             var retor = await AbstractProxy.GenericRequest<Pix>(this.httpClient, requestCustomer);
 
             return retor;
@@ -264,16 +287,8 @@ namespace BoletoNetCore
         {   
             
             var url = $"customers?cpfCnpj={cpfCnpj}";
-            //var requestCustomer = new HttpRequestMessage(HttpMethod.Get, "customers?cpfCnpj=" + cpfCnpj);
             var requestCustomer = new HttpRequestMessage(HttpMethod.Get, url);
-            //requestCustomer.Headers.Add("accept", "application/json");
-            //requestCustomer.Headers.Add("access_token", this.Token);
             var retor = await AbstractProxy.GenericRequest<CustomerList>(this.httpClient, requestCustomer);
-            //var responseCustomer = await this.httpClient.SendAsync(requestCustomer);
-            //if (responseCustomer.StatusCode == HttpStatusCode.Unauthorized)
-            //    throw new UnauthorizedAccessException(responseCustomer.StatusCode.ToString());
-
-            //var retor = await responseCustomer.Content.ReadFromJsonAsync<CustomerList>();
             return retor;
         }
         private async Task<CreditCardHolderInfo> TrataInfoCartao(CustomerInfo info)
@@ -293,11 +308,6 @@ namespace BoletoNetCore
             var requestCustomer = new HttpRequestMessage(HttpMethod.Post, "customers");
             requestCustomer.Content = JsonContent.Create(request);
             var retor = await AbstractProxy.GenericRequest<Customer>(this.httpClient, requestCustomer);
-            
-            //var response = await this.httpClient.SendAsync(requestCustomer);
-            //await this.CheckHttpResponseError(response);
-
-            //var ret = await response.Content.ReadFromJsonAsync<Customer>();
             return retor;
         }
 

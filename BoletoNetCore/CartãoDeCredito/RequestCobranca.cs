@@ -41,7 +41,6 @@
     {
         public string SuccessUrl { get; set; }  //
     }
-
     public class PaymentCreditCard
     {
         public string HolderName { get; set;}
