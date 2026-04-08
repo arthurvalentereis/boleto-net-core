@@ -232,8 +232,9 @@ namespace BoletoNetCore.WebAPI.Controllers
                     return BadRequest(err);
                 }
 
-                if (!Enum.TryParse<TipoCobranca>(tipoCobranca, ignoreCase: true, out var tipo) ||
-                    (tipo != TipoCobranca.CREDIT_CARD && tipo != TipoCobranca.BOLETO_PIX))
+                if (!Enum.TryParse<TipoCobranca>(tipoCobranca, ignoreCase: true, out var tipo)
+                    //|| (tipo != TipoCobranca.CREDIT_CARD && tipo != TipoCobranca.BOLETO_PIX)
+                    )
                 {
                     var err = _metodosUteis.RetornarErroPersonalizado(
                         (int)HttpStatusCode.BadRequest,

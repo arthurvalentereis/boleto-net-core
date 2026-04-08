@@ -2,22 +2,29 @@
 {
     public class RequestCobranca
     {
-        public string Customer { get; set; }  //
-        public string BillingType { get; set; }  //
-        public decimal Value { get; set; }  //
-        public string DueDate { get; set; }  //
-        public string Description { get; set; }  //
-        public string ExternalReference { get; set; }  //
-        public int? InstallmentCount { get; set; }  //
-        public decimal? InstallmentValue { get; set; }  //
-        public bool? PostalService { get; set; } = false;//
-        public Discount Discount { get; set; } = new Discount();
-        public Fine Fine { get; set; } = new Fine(); 
-        public Interest Interest { get; set; } = new Interest();  
-        public CallBack CallBack { get; set; } = new CallBack();
-        public PaymentCreditCard CreditCard { get; set; } = new PaymentCreditCard();
-        public CustomerInfo CustomerInfo { get; set; } = new CustomerInfo();
-        public CreditCardHolderInfo CreditCardHolderInfo { get; set; } = new CreditCardHolderInfo();
+        public string Customer { get; set; }  //Required
+        /// <summary>
+        /// Allowed:
+        ///  UNDEFINED
+        ///  BOLETO
+        ///  CREDIT_CARD
+        ///  PIX
+        /// </summary>
+        public string BillingType { get; set; }  //Required
+        public decimal Value { get; set; }  //required
+        public string DueDate { get; set; }  //required
+        public string Description { get; set; }  //opcional
+        public string ExternalReference { get; set; }  //opcional
+        public int? InstallmentCount { get; set; }  //opcional
+        public decimal? InstallmentValue { get; set; }  //opcional
+        public bool? PostalService { get; set; } = false;//opcional
+        public Discount Discount { get; set; } = new Discount(); //opcional
+        public Fine Fine { get; set; } = new Fine();  //opcional
+        public Interest Interest { get; set; } = new Interest();   //opcional
+        public CallBack CallBack { get; set; } = new CallBack();//opcional
+        public PaymentCreditCard CreditCard { get; set; } = new PaymentCreditCard();//opcional
+        public CustomerInfo CustomerInfo { get; set; } = new CustomerInfo();//opcional
+        public CreditCardHolderInfo CreditCardHolderInfo { get; set; } = new CreditCardHolderInfo();//opcional
         public string RemoteIp { get; set; }
     }
     public class Discount
