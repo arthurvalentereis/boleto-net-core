@@ -233,13 +233,19 @@ namespace BoletoNetCore
         public async Task<BankSlip> GerarCobrancaBoleto(RequestCobranca requestInvoice)
         {
             var customer = "";
-            var retor = await VerificaCustomer(requestInvoice.CustomerInfo.CpfCnpj);
-            if (retor.Data.Count == 0)
-                customer = AddCustomer(requestInvoice.CustomerInfo).Result.Id;
 
-            if (retor.Data.Count > 0)
-                customer = retor.Data.FirstOrDefault().Id;
+            ///Se o ID do customer não for informado consulta pelo CNPJ senão houver cadastra
+            if(requestInvoice.Customer is null)
+            {
+                var retor = await VerificaCustomer(requestInvoice.CustomerInfo.CpfCnpj);
 
+                if (retor.Data.Count == 0)
+                    customer = AddCustomer(requestInvoice.CustomerInfo).Result.Id;
+
+                if (retor.Data.Count > 0)
+                    customer = retor.Data.FirstOrDefault().Id;
+            }
+        
             requestInvoice.Customer = customer;
 
             var request = new HttpRequestMessage(HttpMethod.Post, "payments");
