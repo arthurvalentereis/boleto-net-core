@@ -64,6 +64,7 @@ namespace BoletoNetCore
         public Task<string> GerarToken()
         {
             this.Token = this.ChaveApi;
+            this.httpClient.DefaultRequestHeaders.Remove("access_token");
             this.httpClient.DefaultRequestHeaders.Add("access_token", this.Token);
             return Task.FromResult(this.Token);
         }
