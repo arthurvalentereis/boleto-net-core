@@ -245,10 +245,10 @@ namespace BoletoNetCore
 
                 if (retor.Data.Count > 0)
                     customer = retor.Data.FirstOrDefault().Id;
+
+                requestInvoice.Customer = customer;
             }
         
-            requestInvoice.Customer = customer;
-
             var request = new HttpRequestMessage(HttpMethod.Post, "payments");
             request.Content = JsonContent.Create(requestInvoice);
             var retorno = await AbstractProxy.GenericRequest<BankSlip>(this.httpClient, request);
