@@ -32,6 +32,7 @@ namespace BoletoNetCore
                     this._httpClient.BaseAddress = new Uri("https://sandbox.asaas.com/api/v3/");// Homologação
                     //this._httpClient.BaseAddress = new Uri("https://api.asaas.com/v3/");//Prod
 
+                    this._httpClient.DefaultRequestHeaders.Add("User-Agent", "C# Banking API");
                     this._httpClient.DefaultRequestHeaders.Add("accept", "application/json");
                 }
 
@@ -236,18 +237,16 @@ namespace BoletoNetCore
             var customer = "";
 
             ///Se o ID do customer não for informado consulta pelo CNPJ senão houver cadastra
-            if(requestInvoice.Customer is null)
-            {
-                var retor = await VerificaCustomer(requestInvoice.CustomerInfo.CpfCnpj);
+            var retor = await VerificaCustomer(requestInvoice.CustomerInfo.CpfCnpj);
+          
+            if (retor.Data.Count == 0)
+                customer = AddCustomer(requestInvoice.CustomerInfo).Result.Id;
 
-                if (retor.Data.Count == 0)
-                    customer = AddCustomer(requestInvoice.CustomerInfo).Result.Id;
+            if (retor.Data.Count > 0)
+                customer = retor.Data.FirstOrDefault().Id;
 
-                if (retor.Data.Count > 0)
-                    customer = retor.Data.FirstOrDefault().Id;
-
-                requestInvoice.Customer = customer;
-            }
+            requestInvoice.Customer = customer;
+          
         
             var request = new HttpRequestMessage(HttpMethod.Post, "payments");
             request.Content = JsonContent.Create(requestInvoice);
