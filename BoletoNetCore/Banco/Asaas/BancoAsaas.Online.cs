@@ -236,17 +236,19 @@ namespace BoletoNetCore
         {
             var customer = "";
 
-            ///Se o ID do customer não for informado consulta pelo CNPJ senão houver cadastra
-            var retor = await VerificaCustomer(requestInvoice.CustomerInfo.CpfCnpj);
-          
-            if (retor.Data.Count == 0)
-                customer = AddCustomer(requestInvoice.CustomerInfo).Result.Id;
+            if(requestInvoice.Customer is null)
+            {
+                ///Se o ID do customer não for informado consulta pelo CNPJ senão houver cadastra
+                var retor = await VerificaCustomer(requestInvoice.CustomerInfo.CpfCnpj);
 
-            if (retor.Data.Count > 0)
-                customer = retor.Data.FirstOrDefault().Id;
+                if (retor.Data.Count == 0)
+                    customer = AddCustomer(requestInvoice.CustomerInfo).Result.Id;
 
-            requestInvoice.Customer = customer;
-          
+                if (retor.Data.Count > 0)
+                    customer = retor.Data.FirstOrDefault().Id;
+
+                requestInvoice.Customer = customer;
+            }
         
             var request = new HttpRequestMessage(HttpMethod.Post, "payments");
             request.Content = JsonContent.Create(requestInvoice);
