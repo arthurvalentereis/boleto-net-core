@@ -236,7 +236,7 @@ namespace BoletoNetCore
         {
             var customer = "";
 
-            if(requestInvoice.Customer is null)
+            if(string.IsNullOrWhiteSpace(requestInvoice.Customer))
             {
                 ///Se o ID do customer não for informado consulta pelo CNPJ senão houver cadastra
                 var retor = await VerificaCustomer(requestInvoice.CustomerInfo.CpfCnpj);
