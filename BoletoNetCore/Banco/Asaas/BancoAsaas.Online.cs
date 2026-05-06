@@ -257,6 +257,27 @@ namespace BoletoNetCore
             return retorno;
 
         }
+
+        /// <summary>
+        /// Cobrança exclusiva em PIX (billingType PIX na API Asaas POST v3/payments).
+        /// Após criar o pagamento, obtém o QR Code em GET payments/{id}/pixQrCode.
+        /// </summary>
+        private async Task<BankSlip> GerarCobrancaPix(RequestCobranca requestInvoice)
+        {
+            if (requestInvoice == null)
+                throw new ArgumentNullException(nameof(requestInvoice));
+
+            requestInvoice.BillingType = "PIX";
+            requestInvoice.PostalService = false;
+
+            var retorno = await GerarCobrancaBoleto(requestInvoice);
+
+            if (!string.IsNullOrWhiteSpace(retorno?.Id))
+                retorno.Pix = await GerarPix(retorno.Id);
+
+            return retorno;
+        }
+
         public async Task<object> GerarCobrancaPorTipo(TipoCobranca tipo, GerarCobrancaRequest request)
         {
             switch (tipo)
@@ -268,20 +289,19 @@ namespace BoletoNetCore
                 case TipoCobranca.BOLETO_PIX:
                     return await GerarCobrancaBoletoComPix(request.RequestCobranca ?? throw new ArgumentException("RequestCobranca é obrigatório para tipo BOLETO_PIX."));
                 case TipoCobranca.BOLETO:
-                    return await GerarCobrancaBoleto(request.RequestCobranca ?? throw new ArgumentException("RequestCobranca é obrigatório para tipo BOLETO_PIX."));
+                    return await GerarCobrancaBoleto(request.RequestCobranca ?? throw new ArgumentException("RequestCobranca é obrigatório para tipo BOLETO."));
                 case TipoCobranca.PIX:
+                    return await GerarCobrancaPix(request.RequestCobranca ?? throw new ArgumentException("RequestCobranca é obrigatório para tipo PIX."));
                 default:
-                    throw new ArgumentException($"Tipo de cobrança '{tipo}' não suportado por este método. Use LINK, CREDIT_CARD, BOLETO ou BOLETO_PIX.");
+                    throw new ArgumentException($"Tipo de cobrança '{tipo}' não suportado por este método. Use LINK, CREDIT_CARD, BOLETO, BOLETO_PIX ou PIX.");
             }
         }
-
         private async Task<BankSlip> GerarCobrancaBoletoComPix(RequestCobranca requestInvoice)
         {
             var retorno = await GerarCobrancaBoleto(requestInvoice);
             retorno.Pix = await GerarPix(retorno.Id);
             return retorno;
         }
-
         public async Task<Pix> GerarPix(string idCobranca)
         {
             var requestCustomer = new HttpRequestMessage(HttpMethod.Get, $"payments/{idCobranca}/pixQrCode");
