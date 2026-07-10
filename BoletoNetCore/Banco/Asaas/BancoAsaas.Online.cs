@@ -15,6 +15,7 @@ using BoletoNetCore.Cobrancas;
 using System.Linq;
 using System.Text;
 using Leader.Infrasctruture.Repositories.Base;
+using BoletoNetCore.Assinaturas;
 
 namespace BoletoNetCore
 {
@@ -530,6 +531,170 @@ namespace BoletoNetCore
             if (string.IsNullOrWhiteSpace(value)) return null;
             if (DateTime.TryParse(value, out var d)) return d;
             return null;
+        }
+
+        public async Task<AssinaturaItemResponse> CriarAssinatura(CriarAssinaturaRequest request)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            var customer = request.Customer;
+            if (string.IsNullOrWhiteSpace(customer))
+            {
+                if (request.CustomerInfo == null || string.IsNullOrWhiteSpace(request.CustomerInfo.CpfCnpj))
+                    throw new ArgumentException("Customer ou CustomerInfo.CpfCnpj é obrigatório.");
+
+                var existing = await VerificaCustomer(request.CustomerInfo.CpfCnpj);
+                if (existing.Data.Count == 0)
+                    customer = (await AddCustomer(request.CustomerInfo)).Id;
+                else
+                    customer = existing.Data.First().Id;
+            }
+
+            var asaasRequest = new AsaasSubscriptionRequest
+            {
+                customer = customer,
+                billingType = request.BillingType,
+                value = request.Value,
+                nextDueDate = request.NextDueDate,
+                cycle = request.Cycle,
+                description = request.Description,
+                externalReference = request.ExternalReference,
+                creditCard = request.CreditCard,
+                creditCardHolderInfo = request.CreditCardHolderInfo
+                    ?? (request.CustomerInfo != null ? await TrataInfoCartao(request.CustomerInfo) : null),
+                remoteIp = request.RemoteIp,
+            };
+
+            var httpRequest = new HttpRequestMessage(HttpMethod.Post, "subscriptions");
+            httpRequest.Content = JsonContent.Create(asaasRequest);
+            var asaasResponse = await AbstractProxy.GenericRequest<AsaasSubscriptionResponse>(this.httpClient, httpRequest);
+
+            var result = MapToAssinaturaItem(asaasResponse);
+            await EnrichWithFirstPaymentUrls(result);
+            return result;
+        }
+
+        public async Task<ListaAssinaturasResponse> ListarAssinaturas(ListaAssinaturasFiltros filtros)
+        {
+            var queryString = BuildSubscriptionsQueryString(filtros);
+            var uri = string.IsNullOrEmpty(queryString) ? "subscriptions" : "subscriptions?" + queryString;
+            var request = new HttpRequestMessage(HttpMethod.Get, uri);
+            request.Headers.Add("accept", "application/json");
+            request.Headers.Add("access_token", this.ChaveApi);
+            request.Headers.Add("user-agent", "C# API");
+
+            var asaasResponse = await AbstractProxy.GenericRequest<AsaasSubscriptionListResponse>(this.httpClient, request, null);
+            if (asaasResponse == null)
+                return new ListaAssinaturasResponse { Limit = filtros?.Limit ?? 10, Offset = filtros?.Offset ?? 0 };
+
+            return MapToListaAssinaturasResponse(asaasResponse);
+        }
+
+        public async Task<AssinaturaItemResponse> ObterAssinatura(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                throw new ArgumentException("Id da assinatura é obrigatório.");
+
+            var request = new HttpRequestMessage(HttpMethod.Get, $"subscriptions/{id}");
+            request.Headers.Add("accept", "application/json");
+            request.Headers.Add("access_token", this.ChaveApi);
+            request.Headers.Add("user-agent", "C# API");
+
+            var asaasResponse = await AbstractProxy.GenericRequest<AsaasSubscriptionResponse>(this.httpClient, request, null);
+            var result = MapToAssinaturaItem(asaasResponse);
+            await EnrichWithFirstPaymentUrls(result);
+            return result;
+        }
+
+        public async Task CancelarAssinatura(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                throw new ArgumentException("Id da assinatura é obrigatório.");
+
+            var request = new HttpRequestMessage(HttpMethod.Delete, $"subscriptions/{id}");
+            request.Headers.Add("accept", "application/json");
+            request.Headers.Add("access_token", this.ChaveApi);
+            request.Headers.Add("user-agent", "C# API");
+
+            var response = await this.httpClient.SendAsync(request);
+            await this.CheckHttpResponseError(response);
+        }
+
+        private async Task EnrichWithFirstPaymentUrls(AssinaturaItemResponse item)
+        {
+            if (item == null || string.IsNullOrWhiteSpace(item.Id))
+                return;
+
+            var payments = await ListarCobrancas(new ListaCobrancasFiltros
+            {
+                Subscription = item.Id,
+                Limit = 1,
+                Offset = 0,
+            });
+
+            var first = payments.Data?.FirstOrDefault();
+            if (first == null)
+                return;
+
+            item.FirstPaymentId = first.Id;
+            item.InvoiceUrl = first.InvoiceUrl;
+            item.BankSlipUrl = first.BankSlipUrl;
+            item.PaymentUrl = !string.IsNullOrWhiteSpace(first.InvoiceUrl)
+                ? first.InvoiceUrl
+                : first.BankSlipUrl;
+        }
+
+        private static string BuildSubscriptionsQueryString(ListaAssinaturasFiltros filtros)
+        {
+            if (filtros == null) return string.Empty;
+            var sb = new StringBuilder();
+            void Add(string key, object value)
+            {
+                if (value == null) return;
+                if (sb.Length > 0) sb.Append('&');
+                sb.Append(key).Append('=').Append(Uri.EscapeDataString(value.ToString()));
+            }
+            Add("offset", filtros.Offset);
+            Add("limit", filtros.Limit);
+            Add("customer", filtros.Customer);
+            Add("status", filtros.Status);
+            Add("externalReference", filtros.ExternalReference);
+            return sb.ToString();
+        }
+
+        private static ListaAssinaturasResponse MapToListaAssinaturasResponse(AsaasSubscriptionListResponse asaas)
+        {
+            var result = new ListaAssinaturasResponse
+            {
+                HasMore = asaas.hasMore,
+                TotalCount = asaas.totalCount,
+                Limit = asaas.limit,
+                Offset = asaas.offset,
+            };
+            if (asaas.data != null)
+            {
+                foreach (var item in asaas.data)
+                    result.Data.Add(MapToAssinaturaItem(item));
+            }
+            return result;
+        }
+
+        private static AssinaturaItemResponse MapToAssinaturaItem(AsaasSubscriptionResponse item)
+        {
+            if (item == null) return null;
+            return new AssinaturaItemResponse
+            {
+                Id = item.id,
+                Customer = item.customer,
+                Status = item.status,
+                BillingType = item.billingType,
+                Cycle = item.cycle,
+                Value = item.value,
+                NextDueDate = item.nextDueDate,
+                Description = item.description,
+                ExternalReference = item.externalReference,
+            };
         }
     }
 

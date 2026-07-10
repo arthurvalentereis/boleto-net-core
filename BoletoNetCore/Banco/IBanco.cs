@@ -224,5 +224,25 @@ namespace BoletoNetCore
         /// Lista clientes do banco com paginação e filtros opcionais.
         /// </summary>
         Task<ListaClientesResponse> ListarClientes(ListaClientesFiltros filtros);
+
+        /// <summary>
+        /// Cria assinatura recorrente.
+        /// </summary>
+        Task<Assinaturas.AssinaturaItemResponse> CriarAssinatura(Assinaturas.CriarAssinaturaRequest request);
+
+        /// <summary>
+        /// Lista assinaturas com filtros opcionais.
+        /// </summary>
+        Task<Assinaturas.ListaAssinaturasResponse> ListarAssinaturas(Assinaturas.ListaAssinaturasFiltros filtros);
+
+        /// <summary>
+        /// Obtém assinatura por id.
+        /// </summary>
+        Task<Assinaturas.AssinaturaItemResponse> ObterAssinatura(string id);
+
+        /// <summary>
+        /// Cancela assinatura por id.
+        /// </summary>
+        Task CancelarAssinatura(string id);
     }
 }

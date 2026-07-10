@@ -101,6 +101,26 @@ namespace BoletoNetCore
                 Offset = filtros?.Offset ?? 0
             });
         }
+
+        public Task<Assinaturas.AssinaturaItemResponse> CriarAssinatura(Assinaturas.CriarAssinaturaRequest request)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Assinaturas.ListaAssinaturasResponse> ListarAssinaturas(Assinaturas.ListaAssinaturasFiltros filtros)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Assinaturas.AssinaturaItemResponse> ObterAssinatura(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task CancelarAssinatura(string id)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 
