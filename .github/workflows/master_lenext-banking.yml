@@ -14,24 +14,24 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Set up .NET 8
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore BoletoNetCore.WebAPI/BoletoNetCore.WebAPI.csproj
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build BoletoNetCore.WebAPI/BoletoNetCore.WebAPI.csproj --configuration Release --no-restore
 
       - name: Publish
-        run: dotnet publish --configuration Release --no-build --output "${{ github.workspace }}/publish"
+        run: dotnet publish BoletoNetCore.WebAPI/BoletoNetCore.WebAPI.csproj --configuration Release --no-build --output "${{ github.workspace }}/publish"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: .net-app
+          name: webapp
           path: ${{ github.workspace }}/publish
 
   deploy:
@@ -40,7 +40,7 @@ jobs:
 
     environment:
       name: Production
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+      url: ${{ steps.deploy.outputs.webapp-url }}
 
     permissions:
       id-token: write
@@ -49,10 +49,10 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: .net-app
-          path: .
+          name: webapp
+          path: ${{ github.workspace }}/publish
 
-      - name: Login to Azure
+      - name: Azure Login
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_67E920716FE6460B9EC16574B23AD847 }}
@@ -60,9 +60,9 @@ jobs:
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_90A52A209608404983F8B34FDBFB9ADA }}
 
       - name: Deploy to Azure Web App
-        id: deploy-to-webapp
+        id: deploy
         uses: azure/webapps-deploy@v3
         with:
           app-name: lenext-banking
           slot-name: Production
-          package: .
+          package: ${{ github.workspace }}/publish
