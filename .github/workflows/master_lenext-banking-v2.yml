@@ -1,14 +1,11 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy ASP.Net Core app to Azure Web App - lenext-banking-v2
-
 on:
   push:
     branches:
       - master
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: windows-latest
@@ -17,39 +14,32 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-
       - name: Restore dependencies
         run: dotnet restore BoletoNetCore.WebAPI/BoletoNetCore.WebAPI.csproj
-
       - name: Build
         run: dotnet build BoletoNetCore.WebAPI/BoletoNetCore.WebAPI.csproj --configuration Release --no-restore
-
       - name: Publish
         run: dotnet publish BoletoNetCore.WebAPI/BoletoNetCore.WebAPI.csproj --configuration Release --no-build --output "${{ github.workspace }}/publish"
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: webapp
           path: ${{ github.workspace }}/publish
-
   deploy:
     runs-on: windows-latest
     needs: build
     permissions:
       id-token: write #This is required for requesting the JWT
       contents: read #This is required for actions/checkout
-
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: .net-app
+          name: webapp
           path: ${{ github.workspace }}/publish
       
       - name: Login to Azure
@@ -58,7 +48,6 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1BFB00CAF05D43788B0ADF175BC1DB47 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_797BE75B5D6F4BF7B8F46691FB849958 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_E938A372E877456D869D54213D7B55A3 }}
-
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
