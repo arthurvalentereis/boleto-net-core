@@ -30,8 +30,8 @@ namespace BoletoNetCore
                 if (this._httpClient == null)
                 {
                     this._httpClient = new HttpClient();
-                    this._httpClient.BaseAddress = new Uri("https://sandbox.asaas.com/api/v3/");// Homologação
-                    //this._httpClient.BaseAddress = new Uri("https://api.asaas.com/v3/");//Prod
+                    //this._httpClient.BaseAddress = new Uri("https://sandbox.asaas.com/api/v3/");// Homologação
+                    this._httpClient.BaseAddress = new Uri("https://api.asaas.com/v3/");//Prod
 
                     this._httpClient.DefaultRequestHeaders.Add("User-Agent", "C# Banking API");
                     this._httpClient.DefaultRequestHeaders.Add("accept", "application/json");
